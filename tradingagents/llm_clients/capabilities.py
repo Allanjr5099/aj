@@ -108,12 +108,16 @@ _BY_ID: dict[str, ModelCapabilities] = {
     "MiniMax-M2": _MINIMAX_THINKING,
 }
 
-# Forward-compat patterns. New ``deepseek-v5-*`` / ``deepseek-reasoner-*``
-# or ``MiniMax-M3*`` variants inherit the thinking-mode quirks automatically.
+# Forward-compat patterns. Hosted providers often prepend their own namespace
+# (``deepseek-ai/deepseek-v3``, ``third-party/deepseek-r1``,
+# ``minimaxai/minimax-m2.7``), so patterns match either the start of the
+# model ID or the segment after a slash.
 _BY_PATTERN: list[tuple[re.Pattern[str], ModelCapabilities]] = [
-    (re.compile(r"^deepseek-v\d"), _DEEPSEEK_THINKING),
-    (re.compile(r"^deepseek-reasoner"), _DEEPSEEK_THINKING),
-    (re.compile(r"^MiniMax-M\d"), _MINIMAX_THINKING),
+    (re.compile(r"(^|/)deepseek-chat($|[:/_-])", re.IGNORECASE), _DEEPSEEK_CHAT),
+    (re.compile(r"(^|/)deepseek-v\d", re.IGNORECASE), _DEEPSEEK_THINKING),
+    (re.compile(r"(^|/)deepseek-r\d", re.IGNORECASE), _DEEPSEEK_THINKING),
+    (re.compile(r"(^|/)deepseek-reasoner", re.IGNORECASE), _DEEPSEEK_THINKING),
+    (re.compile(r"(^|/)minimax-m\d", re.IGNORECASE), _MINIMAX_THINKING),
 ]
 
 
@@ -122,6 +126,6 @@ def get_capabilities(model_name: str) -> ModelCapabilities:
     if model_name in _BY_ID:
         return _BY_ID[model_name]
     for pattern, caps in _BY_PATTERN:
-        if pattern.match(model_name):
+        if pattern.search(model_name):
             return caps
     return _DEFAULT
