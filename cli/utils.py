@@ -187,7 +187,7 @@ def _fetch_openrouter_models() -> List[Tuple[str, str]]:
         return []
 
 
-def select_openrouter_model() -> str:
+def select_openrouter_model(mode: str) -> str:
     """Select an OpenRouter model from the newest available, or enter a custom ID."""
     models = _fetch_openrouter_models()
 
@@ -195,7 +195,7 @@ def select_openrouter_model() -> str:
     choices.append(questionary.Choice("Custom model ID", value="custom"))
 
     choice = questionary.select(
-        "Select OpenRouter Model (latest available):",
+        f"Select Your [{mode.title()}-Thinking] OpenRouter Model (latest available):",
         choices=choices,
         instruction="\n- Use arrow keys to navigate\n- Press Enter to select",
         style=questionary.Style([
@@ -206,26 +206,28 @@ def select_openrouter_model() -> str:
     ).ask()
 
     if choice is None or choice == "custom":
-        return questionary.text(
+        custom_id = questionary.text(
             "Enter OpenRouter model ID (e.g. google/gemma-4-26b-a4b-it):",
             validate=lambda x: len(x.strip()) > 0 or "Please enter a model ID.",
-        ).ask().strip()
+        ).ask()
+        return custom_id.strip() if custom_id else ""
 
     return choice
 
 
 def _prompt_custom_model_id() -> str:
     """Prompt user to type a custom model ID."""
-    return questionary.text(
+    response = questionary.text(
         "Enter model ID:",
         validate=lambda x: len(x.strip()) > 0 or "Please enter a model ID.",
-    ).ask().strip()
+    ).ask()
+    return response.strip() if response else ""
 
 
 def _select_model(provider: str, mode: str) -> str:
     """Select a model for the given provider and mode (quick/deep)."""
     if provider.lower() == "openrouter":
-        return select_openrouter_model()
+        return select_openrouter_model(mode)
 
     if provider.lower() == "azure":
         return questionary.text(
@@ -321,7 +323,7 @@ def select_llm_provider() -> tuple[str, str | None]:
             ]
         ),
     ).ask()
-    
+
     if choice is None:
         console.print("\n[red]No LLM provider selected. Exiting...[/red]")
         exit(1)
