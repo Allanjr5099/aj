@@ -169,7 +169,7 @@ class MessageBuffer:
             if content is not None:
                 latest_section = section
                 latest_content = content
-               
+
         if latest_section and latest_content:
             # Format the current section for display
             section_titles = {
@@ -593,6 +593,10 @@ def get_user_selections():
             selected_llm_provider, backend_url = ask_minimax_region()
         elif selected_llm_provider == "glm":
             selected_llm_provider, backend_url = ask_glm_region()
+
+        if DEFAULT_CONFIG["backend_url"]:
+            backend_url = DEFAULT_CONFIG["backend_url"]
+            console.print(f"[green]✓ Backend URL from environment:[/green] {backend_url}")
 
         # For Ollama, surface the resolved endpoint (OLLAMA_BASE_URL vs default)
         # before model selection so it's obvious where we're connecting.
@@ -1051,7 +1055,7 @@ def run_analysis(checkpoint: bool = False):
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"{timestamp} [{message_type}] {content}\n")
         return wrapper
-    
+
     def save_tool_call_decorator(obj, func_name):
         func = getattr(obj, func_name)
         @wraps(func)
