@@ -1,0 +1,55 @@
+name: Trading Agent Workflow
+
+on:
+  schedule:
+    - cron: '30 14 * * 1-5'  # 9:30 AM EST weekdays
+  
+  workflow_dispatch:
+    inputs:
+      market:
+        description: 'Market to trade'
+        required: true
+        default: 'stocks'
+        type: choice
+        options:
+          - stocks
+          - crypto
+          - forex
+      strategy:
+        description: 'Trading strategy'
+        required: true
+        default: 'momentum'
+        type: choice
+        options:
+          - momentum
+          - mean-reversion
+          - arbitrage
+
+jobs:
+  trading-agent:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - run: pip install -r requirements.txt
+      
+      - name: Run Trading Agent
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BROKER_API_KEY: ${{ secrets.BROKER_API_KEY }}
+          BROKER_API_SECRET: ${{ secrets.BROKER_API_SECRET }}
+          MARKET: ${{ github.event.inputs.market || 'stocks' }}
+          STRATEGY: ${{ github.event.inputs.strategy || 'momentum' }}
+        run: python -m trading_agent.main --market $MARKET --strategy $STRATEGY
+      
+      - if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: trading-logs
+          path: logs/
